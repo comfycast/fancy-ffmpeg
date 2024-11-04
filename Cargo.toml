@@ -1,6 +1,13 @@
 [package]
 name = "fancy-ffmpeg"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
+license = "Apache-2.0"
+authors = ["Federico Maria Morrone <contact@morrone.dev>"]
+description = "Fancy wrapper to ffmpeg cli"
+readme = "README.md"
+documentation = "https://docs.rs/fancy-ffmpeg"
+repository = "https://github.com/comfycast/fancy-ffmpeg"
+include = ["src/**/*.rs", "README.md", "LICENSE"]
 
 [dependencies]
