@@ -1,3 +1,7 @@
+mod ffprobe;
+
+pub use ffprobe::*;
+
 pub struct FFmpeg {}
 
 impl FFmpeg {
