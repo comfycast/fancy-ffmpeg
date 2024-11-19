@@ -4,6 +4,7 @@ use std::{
 };
 
 use serde::{Deserialize, Serialize};
+use serde_with::{serde_as, DisplayFromStr};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct FFProbe {
@@ -14,8 +15,12 @@ pub struct FFProbe {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Stream {}
 
+#[serde_as]
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Format {}
+pub struct Format {
+    #[serde_as(as = "DisplayFromStr")]
+    pub duration: f64,
+}
 
 #[derive(Debug, thiserror::Error)]
 pub enum FFProbeError {
@@ -27,18 +32,35 @@ pub enum FFProbeError {
     Process(ExitStatus),
 }
 
+const ARGS: &[&str] = &[
+    "-v",
+    "quiet",
+    "-print_format",
+    "json",
+    "-show_format",
+    "-show_streams",
+];
+
 pub fn ffprobe<P: AsRef<Path>>(path: P) -> Result<FFProbe, FFProbeError> {
     let output = Command::new("ffprobe")
-        .args([
-            "-v",
-            "quiet",
-            "-print_format",
-            "json",
-            "-show_format",
-            "-show_streams",
-        ])
+        .args(ARGS)
         .arg(path.as_ref())
         .output()?;
+
+    if output.status.success() {
+        return serde_json::from_slice(&output.stdout).map_err(FFProbeError::Json);
+    }
+
+    Err(FFProbeError::Process(output.status))
+}
+
+#[cfg(feature = "tokio")]
+pub async fn async_ffprobe<P: AsRef<Path>>(path: P) -> Result<FFProbe, FFProbeError> {
+    let output = tokio::process::Command::new("ffprobe")
+        .args(ARGS)
+        .arg(path.as_ref())
+        .output()
+        .await?;
 
     if output.status.success() {
         return serde_json::from_slice(&output.stdout).map_err(FFProbeError::Json);
